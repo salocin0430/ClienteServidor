@@ -148,6 +148,15 @@ class rabbitmqClient:
 			#self.channel.basic_publish(exchange='', routing_key=body, body=tempQueueName)
 			#print(body)
 		ch.basic_ack(delivery_tag=method.delivery_tag)	
+	def ConvertLista(self,lista):
+		aux=""
+		for enum, valor in enumerate(lista):
+			if(enum==0):
+				aux=str(valor)
+			else:
+				aux=aux+"|||"+str(valor)
+		return aux.replace("'", '"').replace('"["', '"').replace('"]"', '"')
+
 
 	def updatePeriodica(self):
 		#print(self.cancionesSitio)
@@ -156,20 +165,21 @@ class rabbitmqClient:
 			votos={}
 			canciones=self.cancionesSitio[dic].copy()							
 			#print(canciones)
-			print(self.listadicc(canciones),"JAJAJA",self.cancionesSitio[dic])
+			#print(self.listadicc(canciones),"JAJAJA",self.cancionesSitio[dic])
 			votos=self.votosCanciones[dic].copy()
 			songActual=canciones.pop(0)
 			del votos[list(songActual.keys())[0]] #elimina la cancion actaul de la lista de votos
 			newCanciones,CAMBIO=self.ordenar(canciones,votos)
-			print("return",self.listadicc(newCanciones))
+			#print("return",self.listadicc(newCanciones))
 			newCanciones.insert(0,songActual)
 			#print(songActual)
 			mensaje=self.listadicc(newCanciones)
 			mensaje=self.listadicc(newCanciones)
-			print("Actualizo",mensaje)
-			print("FINNNN")
+			print("Actualizo")
+			#print("FINNNN")
 			#print (CAMBIO,mensaje)
-			self.multidifucion(self.channel,self.mesasSitios[dic],str(newCanciones))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas
+			
+			self.multidifucion(self.channel,self.mesasSitios[dic],self.ConvertLista(newCanciones))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas
 
 
 
@@ -192,6 +202,7 @@ class rabbitmqClient:
 				self.votosCanciones[method.routing_key][list(lista.keys())[0]]=0 
 			
 			print ("Inicial",self.votosCanciones)
+			
 		'''	
 		if temporal[0]=="listaActualizada":
 			canciones=self.cancionesSitio[method.routing_key]
@@ -220,14 +231,15 @@ class rabbitmqClient:
 			newCanciones.append(songActual)			
 			self.votosCanciones[method.routing_key][list(songActual.keys())[0]]=0 #reinicio en 0 votos la cancion terminada
 			mensaje=self.listadicc(newCanciones)
-			print("TERMINOOOOOOOOOOOOOO",mensaje)
+			print("TERMINOOOOOOOOOOOOOO")
 			self.cancionesSitio[method.routing_key]=newCanciones
 			ch.basic_publish(exchange='',
 							#routing_key=self.SitiosCodigo[method.routing_key],
 							routing_key=self.SitiosCodigo[method.routing_key],
 							properties=pika.BasicProperties(delivery_mode=2,),
-							body=str(mensaje))	
-			self.multidifucion(ch,self.mesasSitios[method.routing_key],str(newCanciones))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas							
+							body=str(mensaje))
+							
+			self.multidifucion(ch,self.mesasSitios[method.routing_key],self.ConvertLista(aux))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas							
 
 	def listadicc(self,dic):
 		aux=[]
@@ -245,16 +257,17 @@ class rabbitmqClient:
 		print(body)
 		body=body.decode("utf-8")
 		temporal=body.split(",")
-		print(temporal)
+		print(temporal[0])
 		self.printBox1("Mensaje recibido de una mesa {}".format(body))
 		if temporal[0] in self.mesasSitios:       #verificar si el sitio si exixte, sino vevolver mensaje
-			if(not temporal[1] in self.listMesas and "amq" in temporal[1]):
+			if(not temporal[1] in self.listMesas):
 				self.mesasSitios[temporal[0]].append(temporal[1])
 				self.listMesas.append(temporal[1])
 				ch.basic_publish(exchange='',
 								routing_key=properties.reply_to,
 							
 								body="Correcto")
+			print("correcto")
 
 		else:
 			ch.basic_publish(exchange='',
@@ -272,6 +285,7 @@ class rabbitmqClient:
 		self.buttonUpdate.after(1000, self.updatePeriodica)
 		self.root.mainloop()
 	def multidifucion(self,ch,mesas,canciones):
+
 		for mesa in mesas:
 			print(mesa)
 			ch.basic_publish(exchange='',
