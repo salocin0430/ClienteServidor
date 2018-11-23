@@ -111,8 +111,8 @@ class rabbitmqClient:
 		for lugar in self.mesasSitios:
 			self.list2.insert(tkinter.END, lugar+":"+str(self.mesasSitios[lugar]))
 		self.list3.delete(0, tkinter.END)#Borra TODO
-		for lugar in self.listClientesAPP:
-			self.list3.insert(tkinter.END, lugar)
+		for lugar in self.votosCanciones:
+			self.list3.insert(tkinter.END, lugar+":"+str(self.votosCanciones[lugar]))
 
 
 	
@@ -239,7 +239,7 @@ class rabbitmqClient:
 							properties=pika.BasicProperties(delivery_mode=2,),
 							body=str(mensaje))
 							
-			self.multidifucion(ch,self.mesasSitios[method.routing_key],self.ConvertLista(aux))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas							
+			self.multidifucion(ch,self.mesasSitios[method.routing_key],self.ConvertLista(newCanciones))  #difucion a todos, con lista de mesas del sitio y canciones actulizadas							
 
 	def listadicc(self,dic):
 		aux=[]
@@ -251,6 +251,7 @@ class rabbitmqClient:
 	def receiveAtencionMesas(self, ch, method, properties, body):
 		body=body.decode("utf-8")
 		temporal=body.split(",")
+		print(body)
 		self.printBox1("Voto recibido de una mesa {}".format(body))	
 		self.votosCanciones[temporal[0]][temporal[1]]=self.votosCanciones[temporal[0]][temporal[1]] + 1	
 	def receiveMesa(self, ch, method, properties, body):
