@@ -10,7 +10,7 @@ MiIp=sSocket.recv(1024)
 sSocket.send("7000")
 sSocket.close
 
-
+#que pasa amigo com va
 
 #socket conexion para el servicio de dividir
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Creamos un socket Tcp/Ip
